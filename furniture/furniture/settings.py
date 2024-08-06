@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'account',
 ]
 
 REST_FRAMEWORK = {
@@ -164,3 +165,16 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# swagger page의 authorize 설정
+# header부분에 Bearer 토큰 형식으로 추가해서 인증
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'JWT를 사용하려면 <b>Bearer JWT토큰</b> 형식으로 작성해주세요.',
+        }
+    }
+}
