@@ -69,6 +69,8 @@ def signup(request):
             user.set_password(password)
             user.save()
 
+            return Response({'message': 'SUCCESS'}, status=status.HTTP_201_CREATED)
+
     except ValidationError:
         return Response({'message': '유효한 이메일 주소를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
 
