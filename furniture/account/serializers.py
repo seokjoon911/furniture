@@ -11,9 +11,6 @@ class UserSerializer(serializers.ModelSerializer):
         if get_user_model().objects.filter(email=email).exists():
             raise serializers.ValidationError({"email": "이미 존재하는 이메일입니다."})
 
-        if get_user_model().objects.filter(name=name).exists():
-            raise serializers.ValidationError({"name": "이미 존재하는 이름입니다."})
-
         return data
 
     class Meta:
@@ -25,3 +22,32 @@ class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('email','password')
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('email', 'password', 'name')
+
+    def update(self, instance, validated_data):
+        # 비밀번호가 제공된 경우 해시하고 저장
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+
+        return super(UserUpdateSerializer, self).update(instance, validated_data)
+
+class UserPwchangeSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+    new_pw = serializers.CharField(write_only=True)
+    pw_confirm = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = ('password', 'new_pw', 'pw_confirm')
+
+class UseremailcheckSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('email', )
