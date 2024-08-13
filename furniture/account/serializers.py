@@ -51,3 +51,6 @@ class UseremailcheckSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('email', )
+
+class TokenSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()

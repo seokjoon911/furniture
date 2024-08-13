@@ -11,11 +11,13 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 
+from django.http import JsonResponse
+from token_blacklist import add_token_to_blacklist
 
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from account.serializers import UserSerializer, UserLoginSerializer, UserUpdateSerializer, UserPwchangeSerializer, UseremailcheckSerializer
+from account.serializers import UserSerializer, UserLoginSerializer, UserUpdateSerializer, UserPwchangeSerializer, UseremailcheckSerializer, TokenSerializer
 from account.models import User
 @swagger_auto_schema(
     method='post',
@@ -99,6 +101,23 @@ def login(request):
         # 인증에 실패한 경우알림
         return Response({'message': '아이디 또는 비밀번호가 일치하지 않습니다.'}, status=status.HTTP_401_UNAUTHORIZED)
 
+@swagger_auto_schema(method='post', tags=['User'], operation_id='로그아웃', operation_description='로그아웃합니다.', request_body=UserLoginSerializer,)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout(request):
+    jwt_auth = JWTAuthentication()
+    header = jwt_auth.get_header(request)
+
+    if header is not None:
+        token = jwt_auth.get_raw_token(header)
+        if token is not None:
+            add_token_to_blacklist(token)
+            return JsonResponse({'message': '로그아웃되었습니다.'})
+        else:
+            return JsonResponse({'message': '유효한 토큰이 없습니다.'}, status=401)
+    else:
+        return JsonResponse({'message': '헤더에 토큰이 없습니다.'}, status=401)
+
 @swagger_auto_schema(method='delete', tags=['User'], operation_id='회원탈퇴', operation_description='회원탈퇴를 진행합니다.')
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -160,3 +179,25 @@ def check_email_duplication(request):
         return Response({"message": "이미 사용 중인 이메일입니다."}, status=status.HTTP_409_CONFLICT)
     else:
         return Response({"message": "사용 가능한 이메일입니다."}, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(method='post', tags=['User'], request_body=TokenSerializer)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    refresh_token_received = request.data.get('refresh_token')
+
+    if refresh_token_received:
+        try:
+            refresh_token_instance = RefreshToken(refresh_token_received)
+
+            new_access_token = refresh_token_instance.access_token
+            refresh_token_instance.set_jti()
+            refresh_token_instance.set_exp()
+
+            return Response({
+                'access_token': str(new_access_token),
+                'refresh_token': str(refresh_token_instance),
+            }, status=status.HTTP_200_OK)
+
+        except TokenError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
