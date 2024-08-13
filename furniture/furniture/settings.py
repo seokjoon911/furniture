@@ -83,7 +83,22 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+REDIS_HOST = 'localhost' # Redis 서버 주소
+REDIS_PORT = '6379'  # Redis 포트 번호
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "MAX_ENTRIES": 1000,
+        }
+    }
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -91,6 +106,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.TokenBlacklistMiddleware',
 ]
 
 ROOT_URLCONF = 'furniture.urls'
@@ -182,7 +198,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
-#cors 설정
+#CORS 설정
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_METHODS = (
@@ -204,4 +220,3 @@ CORS_ALLOW_HEADERS = (
     "Access-Control-Allow-Origin",
 )
 CORS_ALLOW_CREDENTIALS = True
-
