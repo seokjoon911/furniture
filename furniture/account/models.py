@@ -4,21 +4,23 @@ from django.contrib.auth.hashers import make_password, check_password
 
 #헬퍼 class
 class UserManager(BaseUserManager):
-    def create_user(self, email, name, password=None):
+    def create_user(self, email, name, nickname, password=None):
         user = self.model(
             email=self.normalize_email(email),
             name=name,
+            nickname=nickname,
         )
 
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, name, password):
+    def create_superuser(self, email, name, nickname, password):
         user = self.create_user(
             email,
             name=name,
             password=password,
+            nickname=nickname,
         )
 
         user.is_admin = True
@@ -33,6 +35,7 @@ class User(AbstractBaseUser):
         unique=True,
     )
     name = models.CharField(max_length=30)
+    nickname = models.CharField(max_length=30, unique=True,)
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 

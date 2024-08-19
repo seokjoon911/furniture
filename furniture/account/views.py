@@ -30,6 +30,7 @@ from account.models import User
             'password': openapi.Schema(type=openapi.TYPE_STRING, description="비밀번호"),
             'pw_confirm': openapi.Schema(type=openapi.TYPE_STRING, description="비밀번호확인"),
             'name': openapi.Schema(type=openapi.TYPE_STRING, description="이름"),
+            'nickname': openapi.Schema(type=openapi.TYPE_STRING, description="닉네임"),
         }
     ),
     tags=['User'],
@@ -52,6 +53,7 @@ def signup(request):
     password = request.data.get('password')
     pw_confirm = request.data.get('pw_confirm')
     name = request.data.get('name')
+    nickname = request.data.get('nickname')
 
     try :
         validate_email(email)  # 이메일 주소를 유효성 검사
@@ -61,7 +63,7 @@ def signup(request):
         serializer = UserSerializer(data=request.data)
 
         if serializer.is_valid(raise_exception=True):
-            user = serializer.save(email=email, name=name,)  # 필드 값 바로 저장
+            user = serializer.save(email=email, name=name, nickname=nickname)  # 필드 값 바로 저장
             user.set_password(password)
             user.save()
 
@@ -93,6 +95,7 @@ def login(request):
                              'access_token': str(refresh.access_token),
                              'email': user.email,
                              'name': user.name,
+                             'nickname': user.nickname,
                              }, status=status.HTTP_200_OK)
         else:
             # 인증에는 성공했지만 추가적인 조건을 충족하지 않은 경우 (예: 이메일 미인증)
