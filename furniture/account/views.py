@@ -183,7 +183,7 @@ def check_email_duplication(request):
     else:
         return Response({"message": "사용 가능한 이메일입니다."}, status=status.HTTP_200_OK)
 
-@swagger_auto_schema(method='post', tags=['User'], request_body=TokenSerializer)
+@swagger_auto_schema(method='post', tags=['User'], operation_id='토큰재발급', request_body=TokenSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def refresh_token(request):

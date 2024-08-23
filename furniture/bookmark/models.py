@@ -4,7 +4,7 @@ from product.models import Product
 import uuid
 
 class Bk(models.Model):
-    bk_no = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bk_no = models.CharField(max_length=36, primary_key=True, default=uuid.uuid4, editable=False)
     pd_id = models.ManyToManyField(Product, verbose_name="Products")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
