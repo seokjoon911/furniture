@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Product
-from product.serializers import ProdSerializer
+from product.serializers import ProdSerializer, ProddetailSerializer
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 
@@ -69,3 +69,30 @@ def prod_delete(request, pk):
         return Response({'message': '삭제 성공'}, status=status.HTTP_204_NO_CONTENT)
     else:
         return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+@swagger_auto_schema(
+    method='get',
+    operation_id='제품 리스트 조회',
+    operation_description='제품 전체를 조회합니다',
+    tags=['Product'],
+    responses={200: ProdSerializer}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
+def prod_list(request):
+    prod_list = Product.objects.all()
+    serializer = ProdSerializer(prod_list, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+@swagger_auto_schema(
+    method='get',
+    operation_id='제품 조회',
+    operation_description='제품 1개 조회',
+    tags=['Product'],
+    responses={200: ProddetailSerializer}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def prod_detail(request, pk):
+    prod = get_object_or_404(Product, pk=pk)
+    serializer = ProddetailSerializer(prod)
+    return Response(serializer.data, status=status.HTTP_200_OK)

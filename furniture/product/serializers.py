@@ -8,3 +8,8 @@ class ProdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+class ProddetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('content', 'image', 'created_at')
