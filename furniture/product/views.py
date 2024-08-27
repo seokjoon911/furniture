@@ -1,8 +1,9 @@
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.parsers import MultiPartParser
 from .models import Product
 from product.serializers import ProdSerializer, ProddetailSerializer
 from drf_yasg.utils import swagger_auto_schema
@@ -18,6 +19,7 @@ from django.shortcuts import get_object_or_404
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication]) # JWT토큰 확인
+@parser_classes([MultiPartParser])
 def prod_create(request):
     serializer = ProdSerializer(data=request.data)
 
@@ -83,6 +85,7 @@ def prod_list(request):
     prod_list = Product.objects.all()
     serializer = ProdSerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
 @swagger_auto_schema(
     method='get',
     operation_id='제품 조회',
