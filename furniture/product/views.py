@@ -38,13 +38,13 @@ def prod_create(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([JWTAuthentication])  # JWT토큰 확인
+@parser_classes([MultiPartParser])
 def prod_update(request, pk):
     prod = get_object_or_404(Product, pk=pk)
     serializer = ProdSerializer(instance=prod, data=request.data)
 
     if serializer.is_valid(raise_exception=True):
-        product = Product.objects.get(prod_id=prod.prod_id)
-        user_email = product.user.email
+        user_email = prod.user.email
         if user_email == request.user.email:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -63,8 +63,7 @@ def prod_update(request, pk):
 @authentication_classes([JWTAuthentication])  # JWT토큰 확인
 def prod_delete(request, pk):
     prod = get_object_or_404(Product, pk=pk)
-    product = Product.objects.get(prod_id=prod.prod_id)
-    user_email = product.user.email
+    user_email = prod.user.email
 
     if user_email == request.user.email:
         prod.delete()
