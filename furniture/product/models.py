@@ -8,6 +8,7 @@ class Product(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='user', to_field='nickname')
     image = models.ImageField(null=True)  # 피드 이미지
+    price = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
