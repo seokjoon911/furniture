@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, authentication_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -47,7 +47,6 @@ from account.models import User
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@transaction.atomic()
 def signup(request):
     email = request.data.get('email')
     password = request.data.get('password')

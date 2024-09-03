@@ -55,8 +55,7 @@ def review_update(request, pk):
     serializer = ReviewSerializer(instance=review, data=request.data)
 
     if serializer.is_valid(raise_exception=True):
-        user_email = review.user.email
-        if user_email == request.user.email:
+        if review.user == request.user:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else :
@@ -74,9 +73,8 @@ def review_update(request, pk):
 @authentication_classes([JWTAuthentication])
 def review_delete(request, pk):
     review = get_object_or_404(Review, pk=pk)
-    user_email = review.user.email
 
-    if user_email == request.user.email:
+    if review.user == request.user:
         review.delete()
         return Response({'message': '삭제 성공'}, status=status.HTTP_204_NO_CONTENT)
     else:
@@ -84,14 +82,14 @@ def review_delete(request, pk):
 
 @swagger_auto_schema(
     method='get',
-    operation_id='리뷰 리스트 조회',
+    operation_id='해당 제품 리뷰 리스트 조회',
     operation_description='해당 제품의 전체 리뷰를 조회합니다',
     tags=['Review'],
     responses={200: ReviewSerializer}
 )
 @api_view(['GET'])
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
-def review_list(request, prod_id):
+def review_prod(request, prod_id):
     prod_list = Review.objects.filter(prod_id=prod_id)
     serializer = ReviewSerializer(prod_list, many=True)
 
@@ -99,8 +97,8 @@ def review_list(request, prod_id):
 
 @swagger_auto_schema(
     method='get',
-    operation_id='리뷰 조회',
-    operation_description='유저별 리뷰 조회',
+    operation_id='해당 유저별 리뷰 리스트 조회',
+    operation_description='해당 유저별 리뷰 리스트 조회',
     tags=['Review'],
     responses={200: ReviewSerializer}
 )
@@ -108,6 +106,21 @@ def review_list(request, prod_id):
 @permission_classes([AllowAny])
 def review_user(request, user):
     users = Review.objects.filter(user=user)
+    serializer = ReviewSerializer(users, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
+    method='get',
+    operation_id='회원이 쓴 리뷰 조회',
+    operation_description='회원이 쓴 리뷰 전체 조회',
+    tags=['Review'],
+    responses={200: ReviewSerializer}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def review_list(request):
+    users = Review.objects.filter(user=request.user)
     serializer = ReviewSerializer(users, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
