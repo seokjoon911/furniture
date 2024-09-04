@@ -47,11 +47,23 @@ class UserPwchangeSerializer(serializers.Serializer):
         model = get_user_model()
         fields = ('password', 'new_pw', 'pw_confirm',)
 
+class UserPwresetSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('email','name')
+
 class UseremailcheckSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
         fields = ('email',)
+
+class UsernicknamecheckSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('nickname',)
 
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
