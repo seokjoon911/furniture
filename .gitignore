@@ -141,6 +141,7 @@ env.bak/
 venv.bak/
 .idea/
 secrets.json
+email_smtp.py
 
 # Spyder project settings
 .spyderproject
