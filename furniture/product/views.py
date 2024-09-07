@@ -81,7 +81,7 @@ def prod_delete(request, pk):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
 def prod_list(request):
-    prod_list = Product.objects.all()
+    prod_list = Product.objects.filter(is_public=True)  # is_public이 True인 경우만 조회
     serializer = ProdSerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -96,5 +96,9 @@ def prod_list(request):
 @permission_classes([AllowAny])
 def prod_detail(request, pk):
     prod = get_object_or_404(Product, pk=pk)
+
+    if not prod.is_public:
+        return Response({"message": "비공개된 제품입니다."}, status=status.HTTP_404_NOT_FOUND)
+
     serializer = ProddetailSerializer(prod)
     return Response(serializer.data, status=status.HTTP_200_OK)
