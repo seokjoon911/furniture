@@ -13,6 +13,7 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # 생성시 자동으로 시간저장
     rating = models.FloatField()
     image = models.ImageField(null=True)  # 이미지
+    is_public = models.BooleanField(default=True) # 공개/비공개
 
     class Meta:
         db_table = 'review'
