@@ -10,6 +10,7 @@ class Product(models.Model):
     image = models.ImageField(null=True)  # 피드 이미지
     price = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_public = models.BooleanField(default=True) #제품 공개/비공개
 
     class Meta:
         db_table = 'product'
