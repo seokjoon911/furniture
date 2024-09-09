@@ -78,7 +78,7 @@ def cart_delete(request, pk):
 @authentication_classes([JWTAuthentication]) # JWT토큰 확인
 def cart_list(request):
     try:
-        carts = Cart.objects.filter(user=request.user)
+        carts = Cart.objects.filter(user=request.user, prod_id__is_public=True)
         serializer = CartSerializer(carts, many=True)
         return Response(serializer.data)
     except Cart.DoesNotExist:

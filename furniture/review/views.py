@@ -12,6 +12,7 @@ from django.http import JsonResponse
 
 from review.serializers import ReviewSerializer
 from .models import Review
+from product.models import Product
 
 # swagger 데코레이터 설정
 @swagger_auto_schema(
@@ -90,9 +91,15 @@ def review_delete(request, pk):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
 def review_prod(request, prod_id):
-    prod_list = Review.objects.filter(prod_id=prod_id)
-    serializer = ReviewSerializer(prod_list, many=True)
+    product = get_object_or_404(Product, pk=prod_id)  # 제품 정보를 가져옴
+    if not product.is_public:  # 제품이 비공개인 경우
+        return Response({'message': '비공개된 제품이여서 리뷰가 공개되지 않습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
+    prod_list = Review.objects.filter(prod_id=prod_id, is_public=True)  # 공개된 리뷰만 필터링
+    if not prod_list.exists():  # 공개된 리뷰가 없는 경우
+        return Response({'message': '비공개된 리뷰입니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ReviewSerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
@@ -105,10 +112,18 @@ def review_prod(request, prod_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def review_user(request, user):
+    users = Review.objects.filter(user=user, prod_id__is_public=True)
+    if not users.exists():  # 공개된 리뷰가 없는 경우
+        return Response({'message': '비공개된 리뷰입니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ReviewSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+"""
     users = Review.objects.filter(user=user)
     serializer = ReviewSerializer(users, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+"""
 
 @swagger_auto_schema(
     method='get',
