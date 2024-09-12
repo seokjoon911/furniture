@@ -4,8 +4,8 @@ from django.conf import settings
 
 class Product(models.Model):
     prod_id = models.CharField(max_length=36, primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=100)
-    content = models.TextField() #글 내용
+    title = models.CharField(max_length=100) #제목
+    content = models.TextField() #내용
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='user', to_field='nickname')
     image = models.ImageField(null=True)  # 피드 이미지
