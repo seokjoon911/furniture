@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'review',
     'cart',
     'notice',
+    'menu',
 ]
 
 AUTH_USER_MODEL = 'account.User'  # 커스텀 유저를 장고에서 사용하기 위함

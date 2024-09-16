@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/review/', include('review.urls')),
     path('api/cart/', include('cart.urls')),
     path('api/notice/', include('notice.urls')),
+    path('api/menu/', include('menu.urls')),
     #스웨거 부분
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
