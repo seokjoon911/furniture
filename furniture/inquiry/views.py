@@ -87,12 +87,19 @@ def inquiry_delete(request, pk):
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
 def inquiry_prod(request, prod_id):
     product = get_object_or_404(Product, pk=prod_id)  # 제품 정보를 가져옴
-    if not product.is_public:  # 제품이 비공개인 경우
+
+    # 제품이 비공개인 경우 처리
+    if not product.is_public:
         return Response({'message': '비공개된 제품이여서 제품 문의가 공개되지 않습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-    prod_list = Inquiry.objects.filter(prod_id=prod_id, is_public=True)  # 공개된 문의만 필터링
-    if not prod_list.exists():  # 공개된 문의가 없는 경우
-        return Response({'message': '비공개된 제품 문의입니다.'}, status=status.HTTP_404_NOT_FOUND)
+    # 관리자인 경우 모든 문의를, 일반 유저는 공개된 문의만 확인
+    if getattr(request.user, 'is_admin', False):  # is_admin 필드를 확인
+        prod_list = Inquiry.objects.filter(prod_id=prod_id)  # 관리자일 경우 전체 문의 확인
+    else:
+        prod_list = Inquiry.objects.filter(prod_id=prod_id, is_public=True)  # 일반 유저는 공개된 문의만 확인
+
+    if not prod_list.exists():
+        return Response({'message': '해당 제품에 문의가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = InquirySerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -107,7 +114,14 @@ def inquiry_prod(request, prod_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def inquiry_list(request):
-    users = Inquiry.objects.filter(user=request.user)
-    serializer = InquirySerializer(users, many=True)
+    # 관리자인 경우 전체 문의, 일반 유저는 본인의 문의만 조회
+    if getattr(request.user, 'is_admin', False):  # is_admin 필드를 확인
+        inquiries = Inquiry.objects.all()  # 관리자일 경우 모든 문의 조회
+    else:
+        inquiries = Inquiry.objects.filter(user=request.user)  # 일반 유저는 본인의 문의만 조회
 
+    if not inquiries.exists():
+        return Response({'message': '문의가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = InquirySerializer(inquiries, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
