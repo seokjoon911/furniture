@@ -95,9 +95,14 @@ def review_prod(request, prod_id):
     if not product.is_public:  # 제품이 비공개인 경우
         return Response({'message': '비공개된 제품이여서 리뷰가 공개되지 않습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
-    prod_list = Review.objects.filter(prod_id=prod_id, is_public=True)  # 공개된 리뷰만 필터링
-    if not prod_list.exists():  # 공개된 리뷰가 없는 경우
-        return Response({'message': '비공개된 리뷰입니다.'}, status=status.HTTP_404_NOT_FOUND)
+    # 관리자는 비공개 리뷰도 볼 수 있음
+    if getattr(request.user, 'is_admin', False):
+        prod_list = Review.objects.filter(prod_id=prod_id)  # 모든 리뷰 조회
+    else:
+        prod_list = Review.objects.filter(prod_id=prod_id, is_public=True)  # 공개된 리뷰만 필터링
+
+    if not prod_list.exists():  # 리뷰가 없는 경우
+        return Response({'message': '리뷰가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = ReviewSerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
@@ -112,9 +117,14 @@ def review_prod(request, prod_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def review_user(request, user):
-    users = Review.objects.filter(user=user, prod_id__is_public=True)
-    if not users.exists():  # 공개된 리뷰가 없는 경우
-        return Response({'message': '비공개된 리뷰입니다.'}, status=status.HTTP_404_NOT_FOUND)
+    # 관리자는 모든 리뷰를 볼 수 있음
+    if getattr(request.user, 'is_admin', False):
+        users = Review.objects.filter(user=user)  # 해당 유저의 모든 리뷰 조회
+    else:
+        users = Review.objects.filter(user=user, prod_id__is_public=True)  # 해당 유저의 공개된 리뷰만 조회
+
+    if not users.exists():  # 리뷰가 없는 경우
+        return Response({'message': '리뷰가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = ReviewSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
