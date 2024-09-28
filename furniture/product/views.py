@@ -1,11 +1,11 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, parser_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.parsers import MultiPartParser
 from .models import Product
-from product.serializers import ProdSerializer, ProddetailSerializer
+from product.serializers import ProdSerializer, ProdDetailSerializer, ProdListSerializer
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 
@@ -18,14 +18,17 @@ from django.shortcuts import get_object_or_404
 )
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-@authentication_classes([JWTAuthentication]) # JWT토큰 확인
+@authentication_classes([JWTAuthentication])  # JWT토큰 확인
 @parser_classes([MultiPartParser])
 def prod_create(request):
     serializer = ProdSerializer(data=request.data)
 
     if serializer.is_valid(raise_exception=True):
         serializer.save(user=request.user)
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @swagger_auto_schema(
     method='put',
@@ -41,15 +44,17 @@ def prod_create(request):
 @parser_classes([MultiPartParser])
 def prod_update(request, pk):
     prod = get_object_or_404(Product, pk=pk)
-    serializer = ProdSerializer(instance=prod, data=request.data)
+    serializer = ProdSerializer(instance=prod, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
 
     if serializer.is_valid(raise_exception=True):
         user_email = prod.user.email
         if user_email == request.user.email:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        else :
+        else:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @swagger_auto_schema(
     method='delete',
@@ -76,13 +81,13 @@ def prod_delete(request, pk):
     operation_id='제품 리스트 조회',
     operation_description='제품 전체를 조회합니다',
     tags=['Product'],
-    responses={200: ProdSerializer}
+    responses={200: ProdListSerializer},
 )
 @api_view(['GET'])
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
 def prod_list(request):
     prod_list = Product.objects.filter(is_public=True)  # is_public이 True인 경우만 조회
-    serializer = ProdSerializer(prod_list, many=True)
+    serializer = ProdListSerializer(prod_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
@@ -90,7 +95,7 @@ def prod_list(request):
     operation_id='제품 조회',
     operation_description='제품 1개 조회',
     tags=['Product'],
-    responses={200: ProddetailSerializer}
+    responses={200: ProdDetailSerializer},
 )
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -100,5 +105,5 @@ def prod_detail(request, pk):
     if not prod.is_public:
         return Response({"message": "비공개된 제품입니다."}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = ProddetailSerializer(prod)
+    serializer = ProdDetailSerializer(prod)
     return Response(serializer.data, status=status.HTTP_200_OK)
