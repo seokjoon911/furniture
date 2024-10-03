@@ -72,7 +72,7 @@ def notice_delete(request, pk):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def notice_list(request):
-    notice_list = Notice.objects.all(is_public=True)
+    notice_list = Notice.objects.filter(is_public=True).select_related('user')
     serializer = NoticeSerializer(notice_list, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -86,7 +86,7 @@ def notice_list(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])  # 글 확인은 로그인 없이 가능
 def notice_detail(request, pk):
-    notice = get_object_or_404(Notice, pk=pk)
+    notice = get_object_or_404(Notice.objects.select_related('user'), pk=pk)
 
     if not notice.is_public:
         return Response({"message": "비공개된 공지사항입니다."}, status=status.HTTP_404_NOT_FOUND)
