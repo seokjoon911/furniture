@@ -3,14 +3,13 @@ from .models import Product
 from account.serializers import UserInfoSerializer
 from menu.models import SubCategory
 
-
 class ProdSerializer(serializers.ModelSerializer):
     user = UserInfoSerializer(read_only=True)  # 유저 정보를 가져옵니다
     category_name = serializers.CharField(write_only=True)  # 입력받을 하위 카테고리 이름
 
     class Meta:
         model = Product
-        fields = ['user', 'title', 'content', 'category_name', 'price', 'image', 'is_public']
+        fields = ['user', 'title', 'content', 'category_name', 'price', 'url', 'is_public']
 
     def create(self, validated_data):
         # 'category_name'은 validated_data에서 제거 후, 카테고리 객체로 변환
@@ -42,7 +41,7 @@ class ProdDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('content', 'image', 'created_at', 'category_name', 'parent_category_name')
+        fields = ('content', 'url', 'created_at', 'category_name', 'parent_category_name')
 
 class ProdListSerializer(serializers.ModelSerializer):
     user = UserInfoSerializer(read_only=True)  # 유저 정보를 가져옵니다
@@ -51,4 +50,4 @@ class ProdListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['user', 'title', 'content', 'category_name', 'parent_category_name', 'price', 'image']
+        fields = ['user', 'title', 'content', 'category_name', 'parent_category_name', 'price', 'url']

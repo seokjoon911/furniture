@@ -15,7 +15,7 @@ import json
 import sys
 import os
 from email_smtp import EMAIL_PORT, DEFAULT_FROM_EMAIL, EMAIL_HOST, EMAIL_HOST_PASSWORD, EMAIL_HOST_USER, EMAIL_USE_TLS
-# from aws_module import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, DEFAULT_FILE_STORAGE
+from aws_module import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME, DEFAULT_FILE_STORAGE
 
 # Path(__file__).resolve() = 현재파일의 절대경로
 # .parent.parent = 상위폴더의 상위폴더 localmap(소스폴더)
@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'corsheaders',
     'account',
     'product',
     'bookmark',
@@ -235,7 +236,7 @@ CORS_ALLOW_HEADERS = (
     "Access-Control-Allow-Origin",
 )
 CORS_ALLOW_CREDENTIALS = True
-"""
+
 # aws 설정
 AWS_ACCESS_KEY_ID = AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY = AWS_SECRET_ACCESS_KEY
@@ -245,4 +246,22 @@ AWS_S3_REGION_NAME = AWS_S3_REGION_NAME
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = 'public-read'
 DEFAULT_FILE_STORAGE = DEFAULT_FILE_STORAGE
-"""
+
+#SQL디버깅
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+    },
+}
+
