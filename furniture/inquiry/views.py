@@ -94,9 +94,9 @@ def inquiry_prod(request, prod_id):
 
     # 관리자인 경우 모든 문의를, 일반 유저는 공개된 문의만 확인
     if getattr(request.user, 'is_admin', False):  # is_admin 필드를 확인
-        prod_list = Inquiry.objects.filter(prod_id=prod_id)  # 관리자일 경우 전체 문의 확인
+        prod_list = Inquiry.objects.filter(prod_id=prod_id).select_related('user')  # 관리자일 경우 전체 문의 확인
     else:
-        prod_list = Inquiry.objects.filter(prod_id=prod_id, is_public=True)  # 일반 유저는 공개된 문의만 확인
+        prod_list = Inquiry.objects.filter(prod_id=prod_id, is_public=True).select_related('user')  # 일반 유저는 공개된 문의만 확인
 
     if not prod_list.exists():
         return Response({'message': '해당 제품에 문의가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
@@ -116,9 +116,9 @@ def inquiry_prod(request, prod_id):
 def inquiry_list(request):
     # 관리자인 경우 전체 문의, 일반 유저는 본인의 문의만 조회
     if getattr(request.user, 'is_admin', False):  # is_admin 필드를 확인
-        inquiries = Inquiry.objects.all()  # 관리자일 경우 모든 문의 조회
+        inquiries = Inquiry.objects.all().select_related('user')  # 관리자일 경우 모든 문의 조회
     else:
-        inquiries = Inquiry.objects.filter(user=request.user)  # 일반 유저는 본인의 문의만 조회
+        inquiries = Inquiry.objects.filter(user=request.user).select_related('user')  # 일반 유저는 본인의 문의만 조회
 
     if not inquiries.exists():
         return Response({'message': '문의가 없습니다.'}, status=status.HTTP_404_NOT_FOUND)

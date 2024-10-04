@@ -53,7 +53,7 @@ def bk_toggle(request):
 @permission_classes([IsAuthenticated])
 def bk_list(request):
     try:
-        bookmarks = Bk.objects.filter(user=request.user)
+        bookmarks = Bk.objects.filter(user=request.user).select_related('user')
         serializer = BkSerializer(bookmarks, many=True)
         return Response(serializer.data)
     except Bk.DoesNotExist:
@@ -70,7 +70,7 @@ def bk_list(request):
 def bk_count(request):
     try:
         bk = Bk.objects.get(user=request.user)
-        bk_count = bk.rest_id.count()
+        bk_count = bk.pd_id.count()
     except Bk.DoesNotExist:
         bk_count = 0
     return Response({"bk_count": bk_count})
