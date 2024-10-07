@@ -38,6 +38,7 @@ class User(AbstractBaseUser):
     nickname = models.CharField(max_length=30, unique=True,)
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    address = models.CharField(max_length=255, blank=True, null=True)  # 주소 필드 추가
 
     objects = UserManager()
 

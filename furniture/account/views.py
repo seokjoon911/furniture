@@ -41,6 +41,7 @@ import string, random
             'pw_confirm': openapi.Schema(type=openapi.TYPE_STRING, description="비밀번호확인"),
             'name': openapi.Schema(type=openapi.TYPE_STRING, description="이름"),
             'nickname': openapi.Schema(type=openapi.TYPE_STRING, description="닉네임"),
+            'address' : openapi.Schema(type=openapi.TYPE_STRING, description="주소"),
         }
     ),
     tags=['User'],
@@ -63,6 +64,7 @@ def signup(request):
     pw_confirm = request.data.get('pw_confirm')
     name = request.data.get('name')
     nickname = request.data.get('nickname')
+    address = request.data.get('address')
 
     try :
         validate_email(email)  # 이메일 주소를 유효성 검사
@@ -150,7 +152,7 @@ def delete(request):
 
     return Response(status=status.HTTP_204_NO_CONTENT)
 
-@swagger_auto_schema(method='put', tags=['User'], operation_id='정보수정', operation_description='회원정보를 수정합니다.', request_body=UserSerializer)
+@swagger_auto_schema(method='put', tags=['User'], operation_id='정보수정', operation_description='회원정보를 수정합니다.', request_body=UserUpdateSerializer)
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update(request):
