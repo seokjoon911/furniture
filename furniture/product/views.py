@@ -9,8 +9,8 @@ from product.serializers import ProdSerializer, ProdDetailSerializer, ProdListSe
 from drf_yasg.utils import swagger_auto_schema
 from django.shortcuts import get_object_or_404
 from aws_module import upload_to_s3, delete_from_s3
-import os, uuid
 from django.conf import settings
+import os, uuid
 
 @swagger_auto_schema(
     method='post',
@@ -24,7 +24,7 @@ from django.conf import settings
 @authentication_classes([JWTAuthentication])  # JWT토큰 확인
 @parser_classes([MultiPartParser])
 def prod_create(request):
-    request_image = request.FILES.get('url')
+    request_image = request.FILES.get('image')
     serializer = ProdSerializer(data=request.data)
 
     if serializer.is_valid(raise_exception=True):
@@ -36,7 +36,8 @@ def prod_create(request):
             file_name = str(uuid.uuid4()) + os.path.splitext(request_image.name)[1]
 
             # aws_module을 이용하여 S3에 사진 업로드
-            s3_image_url = upload_to_s3(request_image, file_name)
+            upload_image = request_image.seek(0)  # 파일 포인터를 맨 처음으로 리셋
+            s3_image_url = upload_to_s3(upload_image, file_name)
 
             # 이미지 URL을 Product 객체에 저장
             prod_obj.url = s3_image_url
@@ -52,7 +53,7 @@ def prod_create(request):
         raise exceptions.APIException(str(e))
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+'''
 @swagger_auto_schema(
     method='put',
     operation_id='제품 수정',
@@ -74,6 +75,69 @@ def prod_update(request, pk):
         if user_email == request.user.email:
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+'''
+@swagger_auto_schema(
+    method='put',
+    operation_id='제품 수정',
+    operation_description='제품을 수정합니다',
+    tags=['Product'],
+    responses={200: ProdSerializer},
+    request_body=ProdSerializer,
+)
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])  # JWT토큰 확인
+@parser_classes([MultiPartParser])
+def prod_update(request, pk):
+    prod = get_object_or_404(Product, pk=pk)
+    request_image = request.FILES.get('url')
+    old_image_url = prod.url # 기존 사진 URL 저장
+    serializer = ProdSerializer(instance=prod, data=request.data, partial=True)  # partial=True로 부분 업데이트 허용
+
+    if serializer.is_valid(raise_exception=True):
+        user_email = prod.user.email
+        if user_email == request.user.email:
+            try:
+                # 새로운 이미지가 있으면 기존 이미지 삭제 후 새 이미지 업로드
+                if request_image:
+                    # 파일 이름을 UUID로 생성하고 확장자를 유지
+                    file_name = str(uuid.uuid4()) + os.path.splitext(request_image.name)[1]
+
+                    # 새 이미지 S3 업로드
+                    s3_image_url = upload_to_s3(request_image, file_name)
+
+                    # 기존 이미지 삭제
+                    if old_image_url:
+                        file_name = str(old_image_url).replace(
+                            "https://furnitures3.s3.ap-northeast-2.amazonaws.com/images/", "")
+                        delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, file_name)
+
+                    # 새 이미지 URL을 저장
+                    serializer.save(url=s3_image_url)
+
+                else:
+                    # 이미지가 없으면 기존 이미지를 유지
+                    serializer.save()
+
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                # S3 업로드 중 예외 발생 시 처리
+                if request_image:
+                    # 업로드된 새 이미지를 삭제
+                    delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, s3_image_url)
+                    '''
+                    # 기존 이미지를 복원
+                    if old_image_url:
+                        prod.url = old_image_url
+                        prod.save()
+                    '''
+                return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         else:
             return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 

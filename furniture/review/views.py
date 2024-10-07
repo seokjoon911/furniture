@@ -14,6 +14,10 @@ from review.serializers import ReviewSerializer
 from .models import Review
 from product.models import Product
 
+from aws_module import upload_to_s3, delete_from_s3
+from django.conf import settings
+import os, uuid
+
 # swagger 데코레이터 설정
 @swagger_auto_schema(
     method='post',
@@ -27,16 +31,31 @@ from product.models import Product
 @authentication_classes([JWTAuthentication])  # JWT 토큰 확인
 @parser_classes([MultiPartParser])
 def review_create(request):
+    request_image = request.FILES.get('image')  # 이미지 파일 가져오기
     serializer = ReviewSerializer(data=request.data)
 
-    if serializer.is_valid():
-        # 유저와 제품 정보를 설정
-        serializer.validated_data['user'] = request.user
-        serializer.save()  # 리뷰 저장
+    try:
+        if serializer.is_valid(raise_exception=True):
+            # 리뷰 저장
+            review_obj = serializer.save(user=request.user)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)  # 성공적으로 생성된 경우
+            # 이미지가 있으면 S3에 업로드
+            if request_image:
+                file_name = str(uuid.uuid4()) + os.path.splitext(request_image.name)[1]
+                request_image.seek(0)
+                s3_image_url = upload_to_s3(request_image, file_name)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # 오류 발생 시
+                # 리뷰에 이미지 URL 저장
+                review_obj.image = s3_image_url
+                review_obj.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        # 업로드된 이미지가 있으면 삭제
+        if request_image:
+            delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, file_name)
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @swagger_auto_schema(
@@ -53,14 +72,48 @@ def review_create(request):
 @parser_classes([MultiPartParser])
 def review_update(request, pk):
     review = get_object_or_404(Review, pk=pk)
+    request_image = request.FILES.get('image')  # 새 이미지 가져오기
+    old_image_url = review.image  # 기존 이미지 URL
     serializer = ReviewSerializer(instance=review, data=request.data)
 
-    if serializer.is_valid(raise_exception=True):
-        if review.user == request.user:
+    try:
+        if serializer.is_valid(raise_exception=True):
+            # 유저 검증
+            if review.user != request.user:
+                return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+            # 새로운 이미지가 있으면 기존 이미지 삭제 후 업로드
+            if request_image:
+                # 이미지 업로드
+                file_name = str(uuid.uuid4()) + os.path.splitext(request_image.name)[1]
+                request_image.seek(0)
+                new_image_url = upload_to_s3(request_image, file_name)
+
+                # 기존 이미지 삭제
+                if old_image_url:
+                    file_name = str(old_image_url).replace(
+                        "https://furnitures3.s3.ap-northeast-2.amazonaws.com/images/", "")
+                    delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, file_name)
+
+                # 이미지 URL 업데이트
+                serializer.validated_data['image'] = new_image_url
+
+            # 리뷰 저장
             serializer.save()
+
             return Response(serializer.data, status=status.HTTP_200_OK)
-        else :
-            return Response({'message': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+    except Exception as e:
+        # 예외 발생 시 새로운 이미지 삭제 및 기존 이미지 복원
+        if request_image:
+            delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, file_name)
+            '''
+            # 기존 이미지가 있으면 복원
+            if old_image_url:
+                review.image = old_image_url
+                review.save()
+            '''
+        return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @swagger_auto_schema(
     method='delete',
@@ -76,6 +129,9 @@ def review_delete(request, pk):
     review = get_object_or_404(Review, pk=pk)
 
     if review.user == request.user:
+        if review.url:
+            file_name = str(review.url).replace("https://furnitures3.s3.ap-northeast-2.amazonaws.com/images/", "")
+            delete_from_s3(settings.AWS_STORAGE_BUCKET_NAME, file_name)
         review.delete()
         return Response({'message': '삭제 성공'}, status=status.HTTP_204_NO_CONTENT)
     else:

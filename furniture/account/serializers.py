@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('id', 'email', 'password', 'name', 'nickname',)
+        fields = ('id', 'email', 'password', 'name', 'nickname', 'address')
 
 class UserLoginSerializer(serializers.ModelSerializer):
 
@@ -28,7 +28,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'name', 'nickname',)
+        fields = ('email', 'password', 'name', 'nickname','address',)
 
     def update(self, instance, validated_data):
         # 비밀번호가 제공된 경우 해시하고 저장
