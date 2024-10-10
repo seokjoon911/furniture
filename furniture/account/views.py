@@ -28,6 +28,7 @@ from account.serializers import UserSerializer, UserLoginSerializer, UserUpdateS
 from account.models import User
 
 import string, random
+from .task import send_verification_email
 
 @swagger_auto_schema(
     method='post',
@@ -87,8 +88,9 @@ def signup(request):
 
             mail_title = "이메일 인증을 완료해주세요"  # 이메일의 제목 설정
             mail_to = request.data.get('email')  # 요청 데이터에서 수신자 이메일 주소를 가져옴
-            email = EmailMessage(mail_title, message_data, to=[mail_to])  # 제목, 내용 및 수신자로 이메일 메시지 객체를 생성
-            email.send()  # 이메일 전송
+
+            # Celery를 통해 이메일 전송
+            send_verification_email.delay(mail_title, message_data, mail_to)
 
             return Response({'message': 'SUCCESS'}, status=status.HTTP_201_CREATED)
 
@@ -214,8 +216,8 @@ def pw_reset(request):  # 임시 비밀번호 전송
 
         mail_title = "임시 비밀번호"  # 이메일의 제목 설정
         mail_to = request.data.get('email')  # 요청 데이터에서 수신자 이메일 주소를 가져옴
-        email = EmailMessage(mail_title, message_data, to=[mail_to])  # 제목, 내용 및 수신자로 이메일 메시지 객체를 생성
-        email.send()  # 이메일 전송
+        # Celery를 통해 이메일 전송
+        send_verification_email.delay(mail_title, message_data, mail_to)
 
         return Response({'message': 'SUCCESS'}, status=status.HTTP_201_CREATED)
 
