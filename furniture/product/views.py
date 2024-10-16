@@ -24,7 +24,7 @@ import os, uuid
 @authentication_classes([JWTAuthentication])  # JWT토큰 확인
 @parser_classes([MultiPartParser])
 def prod_create(request):
-    request_image = request.FILES.get('image')
+    request_image = request.FILES.get('url')
     serializer = ProdSerializer(data=request.data)
 
     if serializer.is_valid(raise_exception=True):
@@ -36,8 +36,8 @@ def prod_create(request):
             file_name = str(uuid.uuid4()) + os.path.splitext(request_image.name)[1]
 
             # aws_module을 이용하여 S3에 사진 업로드
-            upload_image = request_image.seek(0)  # 파일 포인터를 맨 처음으로 리셋
-            s3_image_url = upload_to_s3(upload_image, file_name)
+            request_image.seek(0)  # 파일 포인터를 맨 처음으로 리셋
+            s3_image_url = upload_to_s3(request_image, file_name)
 
             # 이미지 URL을 Product 객체에 저장
             prod_obj.url = s3_image_url
