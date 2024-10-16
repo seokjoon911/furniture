@@ -132,7 +132,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+furniture/furniture/.env
 .venv
 env/
 venv/
@@ -143,6 +143,7 @@ venv.bak/
 secrets.json
 email_smtp.py
 aws_module.py
+furniture/zappa_settings.json
 
 # Spyder project settings
 .spyderproject
